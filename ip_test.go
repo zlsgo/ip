@@ -11,7 +11,7 @@ func TestNetWorkIP(t *testing.T) {
 	tt := zlsgo.NewTest(t)
 	ip, err := NetWorkIP()
 	tt.NoError(err)
-	t.Log(ip)
+	tt.Log(ip)
 }
 
 func TestGenerate(t *testing.T) {

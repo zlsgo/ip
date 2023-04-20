@@ -16,44 +16,47 @@ const dburl = "https://raw.githubusercontent.com/lionsoul2014/ip2region/master/d
 
 // const globalRegionUrl = "https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/global_region.csv"
 
-var db = zutil.Once(func() (searcher *Searcher) {
-	dbPath := zfile.RealPath("ip.xdb")
-	download := func() {
-		downloadURL := dburl
-		var r *zhttp.Res
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		r, err := http().Get("https://api.ip.sb/geoip", ctx)
-		if err == nil {
-			if r.JSON("country").String() == "China" {
+var (
+	DBPath = "ip.xdb"
+	db     = zutil.Once(func() (searcher *Searcher) {
+		dbPath := zfile.RealPath(DBPath)
+		download := func() {
+			downloadURL := dburl
+			var r *zhttp.Res
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			r, err := http().Get("https://api.ip.sb/geoip", ctx)
+			if err == nil {
+				if r.JSON("country").String() == "China" {
+					downloadURL = "https://ghproxy.com/" + downloadURL
+				}
+			} else {
 				downloadURL = "https://ghproxy.com/" + downloadURL
 			}
-		} else {
-			downloadURL = "https://ghproxy.com/" + downloadURL
+			r, err = http().Get(downloadURL)
+			if err != nil {
+				r, err = http().Get(dburl)
+			}
+			if err == nil {
+				err = r.ToFile(dbPath)
+			}
+			zerror.Panic(err)
 		}
-		r, err = http().Get(downloadURL)
+		if zfile.FileSizeUint(dbPath) < 1024*1024*2 {
+			download()
+		}
+
+		cBuff, err := loadContentFromFile(dbPath)
 		if err != nil {
-			r, err = http().Get(dburl)
-		}
-		if err == nil {
-			err = r.ToFile(dbPath)
+			_ = zfile.Remove(dbPath)
 		}
 		zerror.Panic(err)
-	}
-	if zfile.FileSizeUint(dbPath) < 1024*1024*2 {
-		download()
-	}
 
-	cBuff, err := loadContentFromFile(dbPath)
-	if err != nil {
-		_ = zfile.Remove(dbPath)
-	}
-	zerror.Panic(err)
-
-	searcher, err = NewWithBuffer(cBuff)
-	zerror.Panic(err)
-	return
-})
+		searcher, err = NewWithBuffer(cBuff)
+		zerror.Panic(err)
+		return
+	})
+)
 
 type Res struct {
 	Country  string `json:"country"`
