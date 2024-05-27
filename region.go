@@ -18,6 +18,7 @@ const dburl = "https://raw.githubusercontent.com/lionsoul2014/ip2region/master/d
 
 var (
 	DBPath = "ip.xdb"
+	PROXY  = "https://ghproxy.org"
 	db     = zutil.Once(func() (searcher *Searcher) {
 		dbPath := zfile.RealPath(DBPath)
 		download := func() {
@@ -28,10 +29,8 @@ var (
 			r, err := http().Get("https://api.ip.sb/geoip", ctx)
 			if err == nil {
 				if r.JSON("country").String() == "China" {
-					downloadURL = "https://ghproxy.com/" + downloadURL
+					downloadURL = PROXY + "/" + downloadURL
 				}
-			} else {
-				downloadURL = "https://ghproxy.com/" + downloadURL
 			}
 			r, err = http().Get(downloadURL)
 			if err != nil {
@@ -62,6 +61,7 @@ type Res struct {
 	Country  string `json:"country"`
 	City     string `json:"city"`
 	Province string `json:"province"`
+	Operator string `json:"Operator"`
 }
 
 // Region 获取 IP 地理位置
@@ -86,5 +86,6 @@ func Region(ip string) (r Res, err error) {
 		deCity = r.Country
 	}
 	r.City = zutil.IfVal(res[3] == "0", deCity, res[3]).(string)
+	r.Operator = res[4]
 	return r, nil
 }
