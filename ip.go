@@ -46,7 +46,7 @@ func NetWorkIP() (ip string, err error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
 	defer cancel()
 
-	m := []netWorkIPFn{ipsb, ipapi, ipecho, ifconfigCo, ifconfigMe, ipzcorky}
+	m := []netWorkIPFn{ipsb, ipapi, ipecho, ifconfigCo, ifconfigMe, ipzcorky, ipinfo}
 	c := make(chan string, len(m))
 	for _, v := range m {
 		go v(ctx, h, c)
@@ -79,7 +79,6 @@ func ipsb(ctx context.Context, h *zhttp.Engine, c chan<- string) {
 	c <- ip
 }
 
-
 func ipzcorky(ctx context.Context, h *zhttp.Engine, c chan<- string) {
 	r, err := h.Get("https://ip.zcorky.com", ctx)
 	if err != nil {
@@ -104,6 +103,22 @@ func ipecho(ctx context.Context, h *zhttp.Engine, c chan<- string) {
 		return
 	}
 	ip := zstring.TrimSpace(r.String())
+	if ip == "" {
+		return
+	}
+	c <- ip
+}
+
+func ipinfo(ctx context.Context, h *zhttp.Engine, c chan<- string) {
+	r, err := h.Get("https://ipinfo.io/json", ctx)
+	if err != nil {
+		return
+	}
+	if r.StatusCode() != 200 {
+		return
+	}
+
+	ip := zstring.TrimSpace(r.JSON("ip").String())
 	if ip == "" {
 		return
 	}
