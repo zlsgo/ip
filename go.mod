@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/pion/stun v0.6.1
-	github.com/sohaha/zlsgo v1.7.12
+	github.com/sohaha/zlsgo v1.7.18
 )
 
 require (
