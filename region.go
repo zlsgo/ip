@@ -19,7 +19,7 @@ const dburl = "https://raw.githubusercontent.com/lionsoul2014/ip2region/master/d
 
 var (
 	DBPath = "ip.xdb"
-	PROXY  = "https://ghproxy.org"
+	PROXY  = ""
 	db     = zutil.Once(func() (searcher *Searcher) {
 		dbPath := zfile.RealPath(DBPath)
 		download := func() {
@@ -29,8 +29,8 @@ var (
 			defer cancel()
 			r, err := http().Get("https://api.ip.sb/geoip", ctx)
 			if err == nil {
-				if r.JSON("country").String() == "China" {
-					downloadURL = PROXY + "/" + downloadURL
+				if r.JSON("country").String() == "China" && PROXY != "" {
+					downloadURL = PROXY + downloadURL
 				}
 			}
 			r, err = http().Get(downloadURL)
