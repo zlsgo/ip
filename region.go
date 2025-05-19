@@ -9,6 +9,7 @@ import (
 	"github.com/sohaha/zlsgo/zerror"
 	"github.com/sohaha/zlsgo/zfile"
 	"github.com/sohaha/zlsgo/zhttp"
+	"github.com/sohaha/zlsgo/ztype"
 	"github.com/sohaha/zlsgo/zutil"
 )
 
@@ -79,13 +80,13 @@ func Region(ip string) (r Res, err error) {
 		return r, errors.New("IP 解析失败")
 	}
 
-	r.Country = zutil.IfVal(res[0] == "0", "", res[0]).(string)
-	r.Province = zutil.IfVal(res[2] == "0", "", res[2]).(string)
+	r.Country = ztype.ToString(zutil.IfVal(res[0] == "0", "", res[0]))
+	r.Province = ztype.ToString(zutil.IfVal(res[2] == "0", "", res[2]))
 	deCity := r.Province
 	if deCity == "" {
 		deCity = r.Country
 	}
-	r.City = zutil.IfVal(res[3] == "0", deCity, res[3]).(string)
+	r.City = ztype.ToString(zutil.IfVal(res[3] == "0", deCity, res[3]))
 	r.Operator = res[4]
 	return r, nil
 }
