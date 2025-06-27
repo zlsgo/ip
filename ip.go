@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/pion/stun"
@@ -45,7 +46,7 @@ func NetWorkIP() (ip string, err error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
 	defer cancel()
 
-	m := []netWorkIPFn{ipsb, ipapi, ipecho, ifconfigCo, ifconfigMe, ipzcorky, ipinfo}
+	m := []netWorkIPFn{ipsb, ipapi, ipecho, ifconfigCo, ifconfigMe, ipzcorky, ipinfo, ipcf}
 	c := make(chan string, len(m))
 	for _, v := range m {
 		go v(ctx, h, c)
@@ -167,6 +168,31 @@ func ipapi(ctx context.Context, h *zhttp.Engine, c chan<- string) {
 		return
 	}
 	c <- ip
+}
+
+func ipcf(ctx context.Context, h *zhttp.Engine, c chan<- string) {
+	// https://one.one.one.one/cdn-cgi/trace
+	r, err := h.Get("https://cloudflare-dns.com/cdn-cgi/trace", ctx)
+	if err != nil {
+		return
+	}
+
+	if r.StatusCode() != 200 {
+		return
+	}
+
+	text := strings.Split(r.String(), "\n")
+	if len(text) < 2 {
+		return
+	}
+
+	for _, v := range text {
+		if strings.Contains(v, "ip=") {
+			ip := strings.Split(v, "=")[1]
+			c <- ip
+			return
+		}
+	}
 }
 
 func stunIP() (ip string, err error) {
